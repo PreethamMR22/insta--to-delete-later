@@ -33,16 +33,29 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:3000',
-  'http://127.0.0.1:5173'
+  'http://127.0.0.1:5173',
+  'https://insta-to-delete-later-1.onrender.com',
+  'https://*.onrender.com'  // Allows all subdomains of onrender.com
 ].filter(Boolean);
 
+// Enable CORS for all routes
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this application does not allow access from the specified Origin.';
+    // Check if the origin is in the allowed list or matches the pattern
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (allowedOrigin.includes('*')) {
+        // Simple wildcard matching - replace * with .* for regex
+        const regex = new RegExp(allowedOrigin.replace('*', '.*'));
+        return regex.test(origin);
+      }
+      return allowedOrigin === origin;
+    });
+
+    if (!isAllowed) {
+      const msg = `The CORS policy for this site does not allow access from ${origin}`;
       return callback(new Error(msg), false);
     }
     return callback(null, true);
@@ -52,6 +65,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Dev logging middleware
 if (process.env.NODE_ENV === 'development') {

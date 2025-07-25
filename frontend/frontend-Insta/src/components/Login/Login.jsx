@@ -37,24 +37,27 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/v1/auth/register', {
+      const response = await fetch('https://insta-to-delete-later-1.onrender.com/api/v1/auth/register', {
         method: 'POST',
+        mode: 'cors', // Enable CORS mode
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        credentials: 'include',
+        credentials: 'include', // Important for cookies, authorization headers with HTTPS
         body: JSON.stringify({
           username: formData.email, // Using whatever user entered as username
           password: formData.password
         }),
       });
 
-      const data = await response.json();
-
+      // Check if response is ok (status code 2xx)
       if (!response.ok) {
-        throw new Error(data.message || (isLogin ? 'Login failed' : 'Registration failed'));
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
 
       // Store the token in localStorage if it exists
       if (data.token) {
